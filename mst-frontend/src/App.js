@@ -28,7 +28,7 @@ function App() {
 
   const generateMST = async () => {
     if (!start) return alert("Please enter start village");
-    const response = await fetch("https://prims-smart-road-planner-backend.onrender.com", {
+    const response = await fetch("https://prims-smart-road-planner-backend.onrender.com/mst", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ roads, start })
