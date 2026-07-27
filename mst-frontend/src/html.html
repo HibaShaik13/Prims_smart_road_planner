@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SRTF (Preemptive SJF) Bridge Visualizer</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 90%; max-width: 900px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 20px; }
+        
+        /* Bridge Scene */
+        #bridge-scene {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            background: #a2d2ff;
+            border-bottom: 8px solid #333;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .bridge { position: absolute; bottom: 50px; width: 100%; height: 30px; background: #764134; z-index: 2; border-top: 2px solid #5d342a; }
+        
+        /* Person Styling */
+        .person {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            width: 50px;
+            height: 70px;
+            background: #ff6b6b;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: left 0.5s linear;
+            z-index: 3;
+            box-shadow: 0 4px 4px rgba(0,0,0,0.2);
+        }
+        .person.active { border: 3px solid #feca57; transform: scale(1.1); box-shadow: 0 0 15px #feca57; }
+        .person .rt-label { font-size: 10px; background: rgba(0,0,0,0.5); padding: 2px 4px; border-radius: 3px; margin-top: 4px; }
+
+        /* Controls & Tables */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #dfe6e9; padding: 10px; text-align: center; }
+        th { background: #74b9ff; color: white; }
+        
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+        button { padding: 12px 20px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.3s; }
+        .btn-run { background: #1dd1a1; color: white; }
+        .btn-reset { background: #ee5253; color: white; }
+        .btn-step { background: #54a0ff; color: white; }
+
+        .gantt-container { width: 100%; height: 50px; display: flex; border: 1px solid #ccc; margin-top: 10px; background: #eee; overflow: hidden; }
+        .gantt-block { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; border-right: 1px solid white; }
+        
+        #output-log { background: #2d3436; color: #00ff00; padding: 15px; border-radius: 6px; font-family: monospace; height: 150px; overflow-y: auto; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>SRTF (Preemptive SJF) Bridge Crossing</h2>
+
+    <table id="inputTable">
+        <thead>
+            <tr>
+                <th>PID</th>
+                <th>Arrival Time (AT)</th>
+                <th>Burst Time (BT)</th>
+                <th>Remaining Time (RT)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>P1</td><td><input type="number" id="at1" value="0" style="width:50px"></td><td><input type="number" id="bt1" value="7" style="width:50px"></td><td id="rt1">7</td></tr>
+            <tr><td>P2</td><td><input type="number" id="at2" value="2" style="width:50px"></td><td><input type="number" id="bt2" value="4" style="width:50px"></td><td id="rt2">4</td></tr>
+            <tr><td>P3</td><td><input type="number" id="at3" value="4" style="width:50px"></td><td><input type="number" id="bt3" value="1" style="width:50px"></td><td id="rt3">1</td></tr>
+            <tr><td>P4</td><td><input type="number" id="at4" value="5" style="width:50px"></td><td><input type="number" id="bt4" value="4" style="width:50px"></td><td id="rt4">4</td></tr>
+        </tbody>
+    </table>
+
+    <div class="controls">
+        <button class="btn-run" onclick="startSRTF()">Start Auto Simulation</button>
+        <button class="btn-step" onclick="stepSRTF()">Manual Next Step</button>
+        <button class="btn-reset" onclick="resetAll()">Reset</button>
+    </div>
+
+    <div id="bridge-scene">
+        <div class="bridge"></div>
+        <div id="people-container"></div>
+    </div>
+
+    <strong>Gantt Chart (Visual Timeline):</strong>
+    <div class="gantt-container" id="ganttChart"></div>
+
+    <div id="output-log">Log: Click Start to see Preemptive SJF in action...</div>
+    
+    <div id="final-stats" style="margin-top: 15px; font-weight: bold;"></div>
+</div>
+
+<script>
+    let time = 0;
+    let processes = [];
+    let doneCount = 0;
+    let timerId = null;
+    let ganttData = [];
+    let lastPid = -1;
+
+    function resetAll() {
+        clearInterval(timerId);
+        time = 0;
+        doneCount = 0;
+        ganttData = [];
+        lastPid = -1;
+        document.getElementById('people-container').innerHTML = '';
+        document.getElementById('ganttChart').innerHTML = '';
+        document.getElementById('output-log').innerHTML = 'Log: Reset complete.';
+        document.getElementById('final-stats').innerHTML = '';
+        
+        processes = [
+            { id: 1, at: +document.getElementById('at1').value, bt: +document.getElementById('bt1').value, color: '#ff6b6b' },
+            { id: 2, at: +document.getElementById('at2').value, bt: +document.getElementById('bt2').value, color: '#48dbfb' },
+            { id: 3, at: +document.getElementById('at3').value, bt: +document.getElementById('bt3').value, color: '#1dd1a1' },
+            { id: 4, at: +document.getElementById('at4').value, bt: +document.getElementById('bt4').value, color: '#feca57' }
+        ];
+
+        processes.forEach(p => {
+            p.rt = p.bt;
+            p.started = false;
+            p.finished = false;
+            p.wt = 0; p.tat = 0; p.ct = 0; p.rt_time = -1;
+            
+            let div = document.createElement('div');
+            div.className = 'person';
+            div.id = `vis-${p.id}`;
+            div.style.backgroundColor = p.color;
+            div.style.display = 'none'; // Hide until arrival
+            div.innerHTML = `P${p.id}<div class="rt-label" id="rt-label-${p.id}">RT: ${p.rt}</div>`;
+            document.getElementById('people-container').appendChild(div);
+            document.getElementById(`rt${p.id}`).innerText = p.rt;
+        });
+    }
+
+    function stepSRTF() {
+        if (doneCount >= 4) {
+            clearInterval(timerId);
+            showFinalTable();
+            return;
+        }
+
+        // 1. Find process with min remaining time among arrived ones
+        let minRT = Infinity;
+        let idx = -1;
+
+        for (let i = 0; i < 4; i++) {
+            if (processes[i].at <= time && !processes[i].finished && processes[i].rt < minRT) {
+                minRT = processes[i].rt;
+                idx = i;
+            }
+        }
+
+        // Show arrived people
+        processes.forEach(p => {
+            let el = document.getElementById(`vis-${p.id}`);
+            if (time >= p.at && !p.finished) el.style.display = 'flex';
+        });
+
+        if (idx !== -1) {
+            let p = processes[idx];
+            
+            // Logic for Response Time
+            if (p.rt_time === -1) {
+                p.rt_time = time - p.at;
+            }
+
+            // Visual highlight
+            document.querySelectorAll('.person').forEach(el => el.classList.remove('active'));
+            let activeEl = document.getElementById(`vis-${p.id}`);
+            activeEl.classList.add('active');
+
+            // Preemption movement logic: 
+            // Calculate position: (1 - RT/BT) * 80% (distance across bridge)
+            let progress = ((p.bt - p.rt + 1) / p.bt) * 85;
+            activeEl.style.left = (20 + progress) + '%';
+
+            // Decrement RT
+            p.rt--;
+            document.getElementById(`rt${p.id}`).innerText = p.rt;
+            document.getElementById(`rt-label-${p.id}`).innerText = `RT: ${p.rt}`;
+
+            // Update Gantt
+            updateGantt(p);
+
+            log(`Time ${time}: P${p.id} is crossing (Remaining: ${p.rt})`);
+
+            if (p.rt === 0) {
+                p.finished = true;
+                p.ct = time + 1;
+                p.tat = p.ct - p.at;
+                p.wt = p.tat - p.bt;
+                doneCount++;
+                activeEl.style.left = '92%';
+                activeEl.style.opacity = '0.5';
+                log(`Time ${time + 1}: P${p.id} finished crossing!`);
+            }
+        } else {
+            log(`Time ${time}: Bridge Idle`);
+            updateGantt(null);
+        }
+
+        time++;
+    }
+
+    function updateGantt(p) {
+        let chart = document.getElementById('ganttChart');
+        if (p && lastPid === p.id) {
+            let lastBlock = chart.lastElementChild;
+            lastBlock.style.width = (parseInt(lastBlock.style.width) + 20) + 'px';
+        } else {
+            let block = document.createElement('div');
+            block.className = 'gantt-block';
+            block.style.width = '20px';
+            block.style.backgroundColor = p ? p.color : '#333';
+            block.innerText = p ? `P${p.id}` : '-';
+            chart.appendChild(block);
+            lastPid = p ? p.id : -2;
+        }
+    }
+
+    function log(msg) {
+        let l = document.getElementById('output-log');
+        l.innerHTML += `<br>> ${msg}`;
+        l.scrollTop = l.scrollHeight;
+    }
+
+    function startSRTF() {
+        if (doneCount >= 4) resetAll();
+        timerId = setInterval(stepSRTF, 800);
+    }
+
+    function showFinalTable() {
+        let avgWT = 0, avgTAT = 0;
+        let html = "<h3>Final Statistics</h3><table><tr><th>PID</th><th>CT</th><th>WT</th><th>TAT</th><th>RT Time</th></tr>";
+        processes.forEach(p => {
+            html += `<tr><td>P${p.id}</td><td>${p.ct}</td><td>${p.wt}</td><td>${p.tat}</td><td>${p.rt_time}</td></tr>`;
+            avgWT += p.wt;
+            avgTAT += p.tat;
+        });
+        html += `</table><p>Avg WT: ${(avgWT/4).toFixed(2)} | Avg TAT: ${(avgTAT/4).toFixed(2)}</p>`;
+        document.getElementById('final-stats').innerHTML = html;
+    }
+
+    window.onload = resetAll;
+</script>
+
+</body>
+</html>

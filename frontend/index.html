@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Road Planner - Prim's MST</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Smart District Road Planner</h1>
+
+<div class="container">
+
+    <label>Start Village:</label>
+    <input type="text" id="startVillage" placeholder="Enter starting village">
+
+    <h3>Add Road</h3>
+
+    <input type="text" id="from" placeholder="From">
+    <input type="text" id="to" placeholder="To">
+    <input type="number" id="cost" placeholder="Cost">
+
+    <button onclick="addRoad()">Add Road</button>
+
+    <h3>Road List</h3>
+    <ul id="roadList"></ul>
+
+    <button onclick="generateMST()">Generate MST</button>
+
+    <h3>Result</h3>
+    <div id="result"></div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

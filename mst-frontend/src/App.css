@@ -1,0 +1,208 @@
+/* -------------------- FUTURISTIC ROAD BACKGROUND -------------------- */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  color: white;
+  overflow-x: hidden;
+
+  background: url("https://static.vecteezy.com/system/resources/thumbnails/070/849/214/small_2x/futuristic-cityscape-with-illuminated-smart-road-markings-and-autonomous-vehicles-at-night-photo.jpg") 
+  no-repeat center center fixed;
+  background-size: cover;
+  position: relative;
+}
+
+/* Soft overlay so text is readable */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 20, 0.45);
+  z-index: -1;
+}
+
+/* -------------------- DASHBOARD SPLIT -------------------- */
+.dashboard {
+  display: flex;
+  height: 100vh;
+}
+
+/* Left panel: 30% */
+.left-panel {
+  width: 30%;
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* Right panel: 70% */
+.right-panel {
+  width: 70%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Top 40% for Road Network */
+.top-right {
+  flex: 0 0 40%;
+  padding: 10px;
+  overflow: auto;
+}
+
+/* Bottom 60% for MST steps + diagram */
+.bottom-right {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  padding: 10px;
+  overflow: auto;
+  gap: 10px;
+}
+
+/* Step info box */
+.bottom-right .steps {
+  flex: 0 0 35%;
+  background: rgba(0,0,0,0.3);
+  padding: 15px;
+  border-radius: 12px;
+  color: white;
+}
+
+/* MST diagram box */
+.bottom-right .mst-graph {
+  flex: 1;
+  height: 100%;
+  border-radius: 12px;
+  background: #00000033;
+  padding: 10px;
+}
+
+/* Cards & Inputs */
+.card {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 15px rgba(0,255,255,0.3);
+}
+
+input {
+  margin: 8px 0;
+  padding: 10px;
+  width: 90%;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+}
+
+input:focus {
+  box-shadow: 0 0 10px #00eaff;
+}
+
+button {
+  padding: 10px 18px;
+  margin: 5px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  background: linear-gradient(45deg, #00c6ff, #0072ff);
+  color: white;
+  transition: 0.3s ease;
+}
+
+button:hover {
+  transform: scale(1.08);
+}
+
+/* Graph style */
+.vis-network {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  background: #ffffff11;
+}
+
+.total-cost {
+  color: #FFD700;
+  text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+}
+
+/* -------------------- FLOATING PETALS -------------------- */
+
+.petals {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.petal {
+  position: absolute;
+  top: -50px;
+  width: 18px;
+  height: 18px;
+  background: pink;
+  border-radius: 50% 50% 50% 0;
+  opacity: 0.7;
+  animation: fall linear infinite;
+}
+
+@keyframes fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(110vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+/* -------------------- WATER DROPLETS EFFECT -------------------- */
+
+.rain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.drop {
+  position: absolute;
+  bottom: 100%;
+  width: 3px;
+  height: 25px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.2));
+  animation: rain-fall linear infinite;
+  opacity: 0.6;
+}
+
+.drop:nth-child(1) { left: 10%; animation-duration: 0.8s; animation-delay: 0s; }
+.drop:nth-child(2) { left: 25%; animation-duration: 1s; animation-delay: 0.2s; }
+.drop:nth-child(3) { left: 40%; animation-duration: 0.9s; animation-delay: 0.4s; }
+.drop:nth-child(4) { left: 55%; animation-duration: 1.1s; animation-delay: 0.1s; }
+.drop:nth-child(5) { left: 70%; animation-duration: 0.85s; animation-delay: 0.3s; }
+.drop:nth-child(6) { left: 85%; animation-duration: 1.2s; animation-delay: 0.5s; }
+.drop:nth-child(7) { left: 95%; animation-duration: 0.95s; animation-delay: 0.6s; }
+
+@keyframes rain-fall {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(110vh);
+  }
+}
+
